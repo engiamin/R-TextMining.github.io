@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Wrangling Text</title>
+
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"> </a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Text as Data</a>
+</li>
+<li>
+  <a href="wrangling.html">Wrangling Text</a>
+</li>
+<li>
+  <a href="visualize.html">Visualizing Text</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Wrangling Text</h1>
+
+</div>
+
+
+<style type="text/css">
+  body{
+  font-size: 14pt;
+}
+</style>
+<style type="text/css">
+code.r{
+  font-size: 16px;
+}
+pre {
+  font-size: 16px
+}
+</style>
+<div style="margin-bottom:50px;">
+
+</div>
+<p>Since text is unstructured data, a certain amount of wrangling is required to get it into a form where you can analyze it.</p>
+<div style="margin-bottom:50px;">
+
+</div>
+<div id="the-dataset" class="section level1">
+<h1>The Dataset</h1>
+<p>EUSpeech is a dataset of 18,403 speeches from EU leaders (i.e., heads of government in 10 member states, EU commissioners, party leaders in the European Parliament, and ECB and IMF leaders) from 2007 to 2015. These speeches vary in sentiment, topics and ideology, allowing for fine-grained, over-time comparison of representation in the EU.</p>
+<p>source: <a href="https://dataverse.harvard.edu/dataverse/euspeech">EUSpeech Dataverse, Harvard Dataverse</a></p>
+<div style="margin-bottom:50px;">
+
+</div>
+<ul>
+<li>We will use a subset of the aggregated speeches (<a href="https://cairouniv-my.sharepoint.com/:x:/g/personal/engi_amin_cu_edu_eg/EXGn7KjlrjhArqqsfoAf4UUBfveEwGZwg3cQhJkuTGlHfg?e=9KEGY1">link to download dataset</a>)</li>
+</ul>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+<div id="set-working-environemnet" class="section level1">
+<h1>Set Working Environemnet</h1>
+<ul>
+<li>When starting any new project, set your working directory using the <code>setwd()</code> function.</li>
+</ul>
+<pre class="r"><code># Make sure to change any \ to /
+setwd(&quot;F:/Work/Aswan Text Analysis Workshop/R-TextMining.github.io&quot;)</code></pre>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+<div id="install-and-load-packages" class="section level1">
+<h1>Install and Load Packages</h1>
+<p>R is an open-source software. Developers all over the world develop R by adding new features. They do so by creating what we call in the R world “R Packages”</p>
+<p>In order to work with these packages, there are two steps:</p>
+<ol style="list-style-type: decimal">
+<li>Install packages … done only one time if we haven’t installed this package on our computer before.</li>
+<li>Load packages … done every time we start a new R session.</li>
+</ol>
+<p>In this session, we need to install and load two packages:</p>
+<ul>
+<li><code>tidyverse</code> to do data cleaning and tidying.</li>
+<li><code>tidytext</code> to perform text mining tasks.</li>
+<li><code>quanteda</code>for managing and analyzing textual data.</li>
+</ul>
+<pre class="r"><code># Installing Packages
+install.packages(&quot;tidyverse&quot;)
+install.packages(&quot;tidytext&quot;)
+install.packages(&quot;quanteda&quot;)</code></pre>
+<pre class="r"><code># Loading Packages
+library(tidyverse)
+library(tidytext)
+library(quanteda)</code></pre>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+<div id="read-data" class="section level1">
+<h1>Read Data</h1>
+<pre class="r"><code>speeches &lt;- read.csv(&quot;speeches_uk.csv&quot;,
+                     encoding=&quot;UTF-8&quot;)</code></pre>
+<div style="margin-bottom:50px;">
+
+</div>
+<ul>
+<li>Taking a look at a sample of the speeches.</li>
+</ul>
+<pre class="r"><code># Show first 5 rows of speeches
+head(speeches,5)</code></pre>
+<div style="margin-bottom:50px;">
+
+</div>
+<pre class="r"><code># Show last 3 rows of speeches
+tail(speeches,3)</code></pre>
+<div style="margin-bottom:50px;">
+
+</div>
+<ul>
+<li>Select certain columns to look at.</li>
+</ul>
+<pre class="r"><code># Take a look at the content of the text column
+head(speeches$text,1)</code></pre>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+<div id="tidy-data" class="section level1">
+<h1>Tidy Data</h1>
+<ul>
+<li>Take a look at the structure of the data</li>
+</ul>
+<pre class="r"><code># use the structure (str()) function
+str(speeches)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    787 obs. of  6 variables:
+##  $ X      : int  1 2 3 4 5 6 7 8 9 10 ...
+##  $ text   : chr  &quot;&lt;p&gt;This European Council has focused on 3 issues – the UK renegotiation, migration and terrorism.&lt;/p&gt;&lt;p&gt;I talke&quot;| __truncated__ &quot;&lt;p&gt;Thank you Prime Minister for welcoming me here to Warsaw.&lt;/p&gt;&lt;p&gt;It is an honour to be the first leader to ma&quot;| __truncated__ &quot;&lt;p&gt;Thank you President Iohannis for welcoming me to Bucharest today. It’s a pleasure to be here and to have had&quot;| __truncated__ &quot;&lt;p&gt;This is a government that delivers&lt;/p&gt;&lt;p&gt;Thank you very much for that brief introduction. It’s great to be h&quot;| __truncated__ ...
+##  $ title  : chr  &quot;EU Council: PM press conference&quot; &quot;PM statement in Poland: 10 December 2015&quot; &quot;PM statement on talks in Romania, 9 December 2015&quot; &quot;PM Speech: This is a government that delivers&quot; ...
+##  $ date   : chr  &quot;18-12-2015&quot; &quot;10-12-2015&quot; &quot;09-12-2015&quot; &quot;07-12-2015&quot; ...
+##  $ country: chr  &quot;Great Britain&quot; &quot;Great Britain&quot; &quot;Great Britain&quot; &quot;Great Britain&quot; ...
+##  $ speaker: chr  &quot;D. Cameron&quot; &quot;D. Cameron&quot; &quot;D. Cameron&quot; &quot;D. Cameron&quot; ...</code></pre>
+<div style="margin-bottom:80px;">
+
+</div>
+<div id="first-non-textual-data" class="section level2">
+<h2>First: Non Textual Data</h2>
+<div style="margin-bottom:50px;">
+
+</div>
+<p>Looking at the structure of the variables, a number of issues is observed:</p>
+<ol style="list-style-type: decimal">
+<li><code>X</code> variable is redundant and needs to be removed.</li>
+<li><code>date</code> variable is not a date.</li>
+<li><code>country</code> variable needs to be a factor not a character.</li>
+<li><code>speaker</code> variable needs to be a factor not a character.</li>
+</ol>
+<div style="margin-bottom:50px;">
+
+</div>
+<pre class="r"><code>################################################################
+# Issue (1): `X` variable is redundant and needs to be removed.#
+################################################################
+speeches &lt;- speeches %&gt;%
+  select(-X)</code></pre>
+<div style="margin-bottom:50px;">
+
+</div>
+<pre class="r"><code>#############################################
+# Issue (2): `date` variable is not a date  #
+#############################################
+speeches$date &lt;- as.Date(speeches$date, &quot;%d-%m-%Y&quot;)</code></pre>
+<div style="margin-bottom:50px;">
+
+</div>
+<pre class="r"><code>######################################################
+# Issue (3): `country` variable needs to be a factor #
+######################################################
+
+speeches$country &lt;- as.factor(speeches$country)
+
+# check the levels of the new factor
+levels(speeches$country)</code></pre>
+<pre><code>## [1] &quot;Great Britain&quot;</code></pre>
+<div style="margin-bottom:50px;">
+
+</div>
+<pre class="r"><code>######################################################
+# Issue (4): `speaker` variable needs to be a factor #
+######################################################
+
+speeches$speaker &lt;- as.factor(speeches$speaker)
+
+# check the levels of the new factor
+levels(speeches$speaker)</code></pre>
+<pre><code>## [1] &quot;D. Cameron&quot; &quot;G. Brown&quot;   &quot;T. Blair&quot;</code></pre>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+<div id="second-textual-data" class="section level2">
+<h2>Second: Textual Data</h2>
+<p>Cleaning text data involves many transformations such as:</p>
+<ol style="list-style-type: decimal">
+<li>Removing special characters from the text (e.g. html tags, /, @, |, etc…).</li>
+<li>Removing unnecessary whitespace.</li>
+<li>Converting text to lower case.</li>
+<li>Removing stopwords (e.g. the, is, at, on, etc…).</li>
+<li>Removing numbers and punctuation.</li>
+<li>Stemming. It is the process of reducing the word to its root form. The stemming process simplifies the word to its common origin.</li>
+</ol>
+<div style="margin-bottom:50px;">
+
+</div>
+<pre class="r"><code># Do some quick cleaning tasks
+speeches &lt;- speeches %&gt;%
+  mutate(text = str_replace_all(text,&quot;&lt;.*?&gt;&quot;,&quot;&quot;))%&gt;%
+  mutate(text = str_trim(text)) %&gt;%
+  mutate(text = tolower(text)) </code></pre>
+<pre class="r"><code># Tokenize the text column (one word per row)
+tidy_speeches &lt;- speeches %&gt;%
+  unnest_tokens(word, text)</code></pre>
+<pre class="r"><code># Load stopwords lexicon
+data(&quot;stop_words&quot;)
+
+
+# Remove stopwords using anti_join()
+tidy_speeches &lt;- tidy_speeches %&gt;%
+  anti_join(stop_words)</code></pre>
+<pre><code>## Joining, by = &quot;word&quot;</code></pre>
+<pre class="r"><code># Save dataset for further use
+write.csv(tidy_speeches,&quot;tidydata.csv&quot;)</code></pre>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+</div>
+<div id="describe-data" class="section level1">
+<h1>Describe Data</h1>
+<ol style="list-style-type: decimal">
+<li>Show most frequent words.</li>
+</ol>
+<pre class="r"><code>Freqtab &lt;- tidy_speeches %&gt;%
+  count(word,sort=TRUE)
+
+head(Freqtab,20)</code></pre>
+<pre><code>##             word     n
+## 1         people 10660
+## 2          world  5533
+## 3        country  4350
+## 4           it’s  4308
+## 5          prime  4111
+## 6      countries  4079
+## 7        britain  4064
+## 8       minister  3898
+## 9     government  3801
+## 10          time  3309
+## 11         we’ve  2953
+## 12       economy  2798
+## 13        global  2708
+## 14       british  2673
+## 15         we’re  2642
+## 16        future  2572
+## 17      european  2303
+## 18       support  2094
+## 19 international  2000
+## 20        that’s  1996</code></pre>
+<pre class="r"><code># Remove it,we from tidy_speeches
+tidy_speeches &lt;- tidy_speeches %&gt;%
+  filter(str_detect(word, &quot;^it|^we&quot;, negate = TRUE))</code></pre>
+<pre class="r"><code>Freqtab2 &lt;- tidy_speeches %&gt;%
+  count(word,sort=TRUE)
+
+head(Freqtab2,20)</code></pre>
+<pre><code>##             word     n
+## 1         people 10660
+## 2          world  5533
+## 3        country  4350
+## 4          prime  4111
+## 5      countries  4079
+## 6        britain  4064
+## 7       minister  3898
+## 8     government  3801
+## 9           time  3309
+## 10       economy  2798
+## 11        global  2708
+## 12       british  2673
+## 13        future  2572
+## 14      european  2303
+## 15       support  2094
+## 16 international  2000
+## 17        that’s  1996
+## 18        change  1989
+## 19      economic  1946
+## 20         don’t  1912</code></pre>
+<div style="margin-bottom:50px;">
+
+</div>
+<ol start="2" style="list-style-type: decimal">
+<li>Show the top 3 words used by each speaker.</li>
+</ol>
+<pre class="r"><code>top3 &lt;- tidy_speeches %&gt;%
+  group_by(speaker) %&gt;%
+  count(word,sort=TRUE) %&gt;%
+  top_n(n=3)</code></pre>
+<pre><code>## Selecting by n</code></pre>
+<pre class="r"><code>top3</code></pre>
+<pre><code>## # A tibble: 9 x 3
+## # Groups:   speaker [3]
+##   speaker    word         n
+##   &lt;fct&gt;      &lt;chr&gt;    &lt;int&gt;
+## 1 D. Cameron people    5778
+## 2 G. Brown   people    4688
+## 3 G. Brown   world     3019
+## 4 D. Cameron country   2797
+## 5 D. Cameron britain   2768
+## 6 G. Brown   prime     2263
+## 7 T. Blair   people     194
+## 8 T. Blair   prime      118
+## 9 T. Blair   minister   114</code></pre>
+<div style="margin-bottom:50px;">
+
+</div>
+<ol start="3" style="list-style-type: decimal">
+<li>Show context where a certain keyword is used</li>
+</ol>
+<pre class="r"><code>syria_context &lt;- kwic(speeches$text,&#39;syria&#39;)</code></pre>
+<pre><code>## Warning: &#39;kwic.character()&#39; is deprecated. Use &#39;tokens()&#39; first.</code></pre>
+<pre class="r"><code>syria_subset &lt;- as.data.frame(syria_context$pre)
+colnames(syria_subset)&lt;-c(&quot;text&quot;)
+
+tidy_speeches_syr &lt;- syria_subset %&gt;%
+  unnest_tokens(word, text)%&gt;%
+  anti_join(stop_words)</code></pre>
+<pre><code>## Joining, by = &quot;word&quot;</code></pre>
+<pre class="r"><code>syria_words &lt;- tidy_speeches_syr %&gt;%
+  count(word,sort=TRUE)
+
+head(syria_words,15)</code></pre>
+<pre><code>##            word  n
+## 1        people 28
+## 2          iraq 23
+## 3     happening 17
+## 4    transition 15
+## 5      conflict 12
+## 6          iran 11
+## 7     situation 11
+## 8    democratic 10
+## 9          isil 10
+## 10       issues  9
+## 11       action  8
+## 12   government  7
+## 13 humanitarian  7
+## 14        libya  7
+## 15       stable  7</code></pre>
+<div style="margin-bottom:50px;">
+
+</div>
+<ol start="4" style="list-style-type: decimal">
+<li>Determine the frequency of a certain keyword by each speaker.</li>
+</ol>
+<pre class="r"><code>syria_speeches &lt;- tidy_speeches %&gt;%
+  filter(str_detect(word, &quot;^syria&quot;)) %&gt;%
+  group_by(speaker) %&gt;%
+  summarize(Frequency = n())
+
+syria_speeches</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   speaker    Frequency
+##   &lt;fct&gt;          &lt;int&gt;
+## 1 D. Cameron       614
+## 2 G. Brown          14</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
