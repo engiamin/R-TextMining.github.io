@@ -11,7 +11,7 @@
 
 
 
-<title>Visualizing Text</title>
+<title>Topic Modeling</title>
 
 <script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -341,7 +341,7 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Visualizing Text</h1>
+<h1 class="title toc-ignore">Topic Modeling</h1>
 
 </div>
 
@@ -362,174 +362,125 @@ pre {
 <div style="margin-bottom:50px;">
 
 </div>
-<div id="install-and-load-packages" class="section level1">
-<h1>Install and Load Packages</h1>
-<div style="margin-bottom:50px;">
-
-</div>
-<p>In this session, we need to install the following package:</p>
-<ul>
-<li><code>wordcloud</code> to create pretty word clouds, visualize differences and similarity between documents.</li>
-</ul>
-<pre class="r"><code>install.packages(&quot;wordcloud&quot;)</code></pre>
-<pre class="r"><code># Load the packages that we will need for this session
-library(tidyverse)
+<p>Topic modeling is an unsupervised machine learning technique that’s capable of scanning a set of documents, detecting word and phrase patterns within them, and automatically clustering word groups and similar expressions that best characterize a set of documents.</p>
+<pre class="r"><code>library(tidyverse)
 library(tidytext)
-library(wordcloud)</code></pre>
-<div style="margin-bottom:80px;">
-
-</div>
-</div>
-<div id="read-data" class="section level1">
-<h1>Read Data</h1>
-<div style="margin-bottom:50px;">
-
-</div>
-<pre class="r"><code># Read the tidy data from the previous session
-data &lt;- read.csv(&quot;tidydata.csv&quot;)</code></pre>
-<div style="margin-bottom:50px;">
-
-</div>
-<pre class="r"><code># Do some Quick Cleaning
-data &lt;- data %&gt;%
-  select(-X)
-
-data$date &lt;- as.Date(data$date,&quot;%Y-%m-%d&quot;)
-
-data$speaker &lt;- as.factor(data$speaker)</code></pre>
-<div style="margin-bottom:80px;">
-
-</div>
-</div>
-<div id="plot-single-words-unigrams" class="section level1">
-<h1>Plot Single Words (Unigrams)</h1>
-<div style="margin-bottom:50px;">
-
-</div>
-<p>One way we can visualize text is to look at word frequencies and find the most common words. This is even more important when looking across documents.</p>
+library(topicmodels)</code></pre>
+<pre class="r"><code>data &lt;- read.csv(&quot;speeches_uk.csv&quot;)</code></pre>
+<pre class="r"><code>speech_sample &lt;- data %&gt;%
+  mutate(date = as.Date(date,&quot;%d-%m-%Y&quot;)) %&gt;%
+  filter(date &gt; &quot;2015-11-01&quot; &amp; date &lt; &quot;2015-12-31&quot;)</code></pre>
 <pre class="r"><code>data(&quot;stop_words&quot;)
 
-top_single_words &lt;- data %&gt;%
-  anti_join(stop_words) %&gt;%
-  filter(str_detect(word, &quot;^it|^we|^that|^don|[^(Aa-zZ|\\-|&#39;)]&quot;, negate = TRUE))%&gt;%
-  count(speaker, word,sort=TRUE) %&gt;%
-  group_by(speaker) %&gt;%
-  top_n(10) %&gt;%
-  ungroup() %&gt;%
-  mutate(word2 = fct_reorder(word,n))</code></pre>
-<pre><code>## Joining, by = &quot;word&quot;</code></pre>
-<pre><code>## Selecting by n</code></pre>
-<pre class="r"><code>ggplot(top_single_words, aes(x=word2 , y=n,  fill = speaker)) + 
-  geom_col()+
-  guides(fill = &quot;none&quot;)  +
-  labs(y = &quot;Frequency&quot;, x = NULL, 
-       title = &quot;10 most frequent words by speaker&quot;) +
-  facet_wrap(vars(speaker), scales = &quot;free&quot;, nrow=3) +
-  theme_bw() +
-  coord_flip() </code></pre>
-<p><img src="visualize_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
-<div style="margin-bottom:50px;">
-
-</div>
-<p>Another method to order columns propoerly within each facet.</p>
-<pre class="r"><code>top_single_words &lt;- data %&gt;%
-  anti_join(stop_words) %&gt;%
-  filter(str_detect(word, &quot;^it|^we|^that|^don|[^(Aa-zZ|\\-|&#39;)]&quot;, negate = TRUE))%&gt;%
-  count(speaker, word,sort=TRUE) %&gt;%
-  group_by(speaker) %&gt;%
-  top_n(10) %&gt;%
-  ungroup() %&gt;%
-  mutate(word3 = reorder_within(word, n, speaker))</code></pre>
-<pre><code>## Joining, by = &quot;word&quot;</code></pre>
-<pre><code>## Selecting by n</code></pre>
-<pre class="r"><code>ggplot(top_single_words, aes(x=word3 , y=n,  fill = speaker)) + 
-  geom_col()+
-  guides(fill = &quot;none&quot;)  +
-  labs(y = &quot;Frequency&quot;, x = NULL, 
-       title = &quot;10 most frequent words by speaker&quot;) +
-  facet_wrap(vars(speaker), scales = &quot;free&quot;, nrow=3) +
-  theme_bw() +
-  coord_flip() +
-  scale_x_reordered()</code></pre>
-<p><img src="visualize_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
-<div style="margin-bottom:80px;">
-
-</div>
-</div>
-<div id="plot-bigrams" class="section level1">
-<h1>Plot Bigrams</h1>
-<div style="margin-bottom:50px;">
-
-</div>
-<p>We can also look at pairs of words instead of single words. To do this, we need to change a couple arguments in <code>unnest_tokens()</code>, but otherwise everything else stays the same.</p>
-<pre class="r"><code># We need to pre-process the raw data
-raw_data &lt;-  read.csv(&quot;speeches_uk.csv&quot;,
-                     encoding=&quot;UTF-8&quot;)</code></pre>
-<pre class="r"><code># Tokenization is now done differently
-speeches_new &lt;- raw_data %&gt;%
+speech_sample_tidy &lt;- speech_sample %&gt;%
   mutate(text = str_replace_all(text,&quot;&lt;.*?&gt;&quot;,&quot;&quot;))%&gt;%
   mutate(text = str_trim(text)) %&gt;%
   mutate(text = tolower(text)) %&gt;%
-  unnest_tokens(bigram, text, token = &quot;ngrams&quot;, n = 2)</code></pre>
-<div style="margin-bottom:50px;">
-
-</div>
-<p>In order to remove stopwords, we need to split the bigram column into two columns (word1 and word2) with <code>separate()</code>, <code>filter()</code> each of those columns, and then combine the word columns back together as bigram with <code>unite()</code></p>
-<pre class="r"><code>bigrams &lt;- speeches_new %&gt;%
-  separate(bigram, c(&quot;word1&quot;, &quot;word2&quot;), sep = &quot; &quot;) %&gt;% 
-  filter(!word1 %in% stop_words$word,
-         !word2 %in% stop_words$word) %&gt;% 
-  filter(str_detect(word1, &quot;^it|^we|^that|^don|[^(Aa-zZ|\\-|&#39;)]&quot;, negate = TRUE),
-         str_detect(word2, &quot;^it|^we|^that|^don|[^(Aa-zZ|\\-|&#39;)]&quot;, negate = TRUE)) %&gt;% 
-  # Put the two word columns back together
-  unite(bigram, word1, word2, sep = &quot; &quot;)</code></pre>
-<div style="margin-bottom:50px;">
-
-</div>
-<p>Now, let’s plot the bigrams.</p>
-<pre class="r"><code>top_bigrams &lt;- bigrams %&gt;% 
-  # Count all the bigrams by each speaker
-  count(speaker, bigram, sort = TRUE) %&gt;% 
-  # Keep top 10
-  group_by(speaker) %&gt;% 
-  top_n(10) %&gt;% 
-  ungroup() %&gt;% 
-  # Make the bigrams an ordered factor so they plot in order
-  mutate(bigram2 = reorder_within(bigram, n, speaker))</code></pre>
-<pre><code>## Selecting by n</code></pre>
-<pre class="r"><code>ggplot(top_bigrams, aes(x=bigram2 , y=n,  fill = speaker)) + 
-  geom_col()+
-  guides(fill = &quot;none&quot;)  +
-  labs(y = &quot;Frequency&quot;, x = NULL, 
-       title = &quot;10 most frequent bigrams by speaker&quot;) +
-  facet_wrap(vars(speaker), scales = &quot;free&quot;, nrow=3) +
-  theme_bw() +
-  coord_flip() +
-  scale_x_reordered()</code></pre>
-<img src="visualize_files/figure-html/unnamed-chunk-13-1.png" width="672" />
-<div style="margin-bottom:80px;">
-
-</div>
-</div>
-<div id="word-clouds" class="section level1">
-<h1>Word Clouds</h1>
-<div style="margin-bottom:50px;">
-
-</div>
-<p>We use the <code>wordcloud</code> package.</p>
-<pre class="r"><code>wordcloud_data &lt;- data %&gt;%
+  unnest_tokens(word, text)%&gt;%
   anti_join(stop_words) %&gt;%
-  dplyr::filter(str_detect(word, &quot;^it|^we|^that|^don|[^(Aa-zZ|\\-|&#39;)]&quot;, negate = TRUE))%&gt;%
-  count(word)</code></pre>
+  filter(str_detect(word, &quot;^it|^we|^that|^don|[^(Aa-zZ|\\-|&#39;)]&quot;, negate = TRUE)) %&gt;%
+  count(word,X) %&gt;%
+  cast_dtm(X, word, n) </code></pre>
 <pre><code>## Joining, by = &quot;word&quot;</code></pre>
-<pre class="r"><code>wordcloud(
-  words = wordcloud_data$word,
-  freq = wordcloud_data$n,
-  max.words = 30, 
-  colors = &quot;blue&quot;
+<pre class="r"><code>speech_sample_tidy_mx &lt;- as.matrix(speech_sample_tidy)
+
+speech_sample_tidy_mx[1:4, 200:204]</code></pre>
+<pre><code>##     Terms
+## Docs atmosphere attach attachment attack attacker
+##   12          0      0          0      0        0
+##   7           0      0          0      0        0
+##   5           0      0          0      0        0
+##   10          0      0          0      2        0</code></pre>
+<pre class="r"><code>lda_out &lt;- LDA(
+speech_sample_tidy,
+k = 2,
+method = &quot;Gibbs&quot;,
+control = list(seed = 42)
 )</code></pre>
-<p><img src="visualize_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
-</div>
+<pre class="r"><code>glimpse(lda_out)</code></pre>
+<pre><code>## Formal class &#39;LDA_Gibbs&#39; [package &quot;topicmodels&quot;] with 16 slots
+##   ..@ seedwords      : NULL
+##   ..@ z              : int [1:12971] 2 1 2 1 1 1 1 1 1 1 ...
+##   ..@ alpha          : num 25
+##   ..@ call           : language LDA(x = speech_sample_tidy, k = 2, method = &quot;Gibbs&quot;, control = list(seed = 42))
+##   ..@ Dim            : int [1:2] 15 3250
+##   ..@ control        :Formal class &#39;LDA_Gibbscontrol&#39; [package &quot;topicmodels&quot;] with 14 slots
+##   ..@ k              : int 2
+##   ..@ terms          : chr [1:3250] &quot;abdul&quot; &quot;abilities&quot; &quot;ability&quot; &quot;abolished&quot; ...
+##   ..@ documents      : chr [1:15] &quot;12&quot; &quot;7&quot; &quot;5&quot; &quot;10&quot; ...
+##   ..@ beta           : num [1:2, 1:3250] -11.21 -8.64 -8.81 -11.04 -6.59 ...
+##   ..@ gamma          : num [1:15, 1:2] 0.727 0.659 0.714 0.704 0.675 ...
+##   ..@ wordassignments:List of 5
+##   .. ..$ i   : int [1:6638] 1 1 1 1 1 1 1 1 1 1 ...
+##   .. ..$ j   : int [1:6638] 1 35 89 101 104 113 119 133 173 223 ...
+##   .. ..$ v   : num [1:6638] 2 1 2 1 1 1 1 1 1 2 ...
+##   .. ..$ nrow: int 15
+##   .. ..$ ncol: int 3250
+##   .. ..- attr(*, &quot;class&quot;)= chr &quot;simple_triplet_matrix&quot;
+##   ..@ loglikelihood  : num -95084
+##   ..@ iter           : int 2000
+##   ..@ logLiks        : num(0) 
+##   ..@ n              : int 12971</code></pre>
+<pre class="r"><code>lda_topics &lt;- lda_out %&gt;%
+tidy(matrix = &quot;beta&quot;)
+lda_topics %&gt;%
+arrange(desc(beta))</code></pre>
+<pre><code>## # A tibble: 6,500 x 3
+##    topic term        beta
+##    &lt;int&gt; &lt;chr&gt;      &lt;dbl&gt;
+##  1     2 ve        0.0295
+##  2     1 european  0.0196
+##  3     2 people    0.0169
+##  4     1 countries 0.0137
+##  5     1 britain   0.0121
+##  6     1 british   0.0119
+##  7     1 security  0.0115
+##  8     1 people    0.0114
+##  9     1 union     0.0110
+## 10     1 eu        0.0108
+## # ... with 6,490 more rows</code></pre>
+<pre class="r"><code>word_probs &lt;- lda_topics %&gt;%
+group_by(topic) %&gt;%
+top_n(15, beta) %&gt;%
+ungroup() %&gt;%
+mutate(term2 = fct_reorder(term, beta))</code></pre>
+<pre class="r"><code>ggplot( word_probs, aes( term2, beta, fill = as.factor(topic) ) ) + 
+  geom_col(show.legend =FALSE) +
+  facet_wrap(~ topic, scales =&quot;free&quot;) + 
+  coord_flip()</code></pre>
+<p><img src="TP_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<pre class="r"><code>lda_topics2 &lt;- LDA(
+speech_sample_tidy,
+k = 3,
+method = &quot;Gibbs&quot;,
+control = list(seed = 42)) %&gt;%
+tidy(matrix = &quot;beta&quot;)</code></pre>
+<pre class="r"><code>word_probs2 &lt;- lda_topics2 %&gt;%
+group_by(topic) %&gt;%
+top_n(15, beta) %&gt;%
+ungroup() %&gt;%
+mutate(term2 = fct_reorder(term, beta))</code></pre>
+<pre class="r"><code>ggplot( word_probs2, aes( term2, beta, fill = as.factor(topic) ) ) +
+  geom_col(show.legend =FALSE) + 
+  facet_wrap(~ topic, scales = &quot;free&quot;) + 
+  coord_flip()</code></pre>
+<p><img src="TP_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre class="r"><code>lda_topics3 &lt;- LDA(
+speech_sample_tidy,
+k = 4,
+method = &quot;Gibbs&quot;,
+control = list(seed = 42)) %&gt;%
+tidy(matrix = &quot;beta&quot;)</code></pre>
+<pre class="r"><code>word_probs3 &lt;- lda_topics3 %&gt;%
+group_by(topic) %&gt;%
+top_n(15, beta) %&gt;%
+ungroup() %&gt;%
+mutate(term2 = fct_reorder(term, beta))</code></pre>
+<pre class="r"><code>ggplot(word_probs3, aes(term2, beta, fill = as.factor(topic) ) ) +
+  geom_col(show.legend =FALSE) + 
+  facet_wrap(~ topic, scales = &quot;free&quot;) + 
+  coord_flip()</code></pre>
+<p><img src="TP_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
 
 
 
