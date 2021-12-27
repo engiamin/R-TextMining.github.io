@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Sentiment Analysis</title>
+
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"> </a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Introduction</a>
+</li>
+<li>
+  <a href="wrangling.html">Wrangling Text</a>
+</li>
+<li>
+  <a href="visualize.html">Visualizing Text</a>
+</li>
+<li>
+  <a href="SA.html">Sentiment Analysis</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Sentiment Analysis</h1>
+
+</div>
+
+
+<style type="text/css">
+  body{
+  font-size: 14pt;
+}
+</style>
+<style type="text/css">
+code.r{
+  font-size: 16px;
+}
+pre {
+  font-size: 16px
+}
+</style>
+<div style="margin-bottom:50px;">
+
+</div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<div style="margin-bottom:50px;">
+
+</div>
+<p>Sentiment analysis is the task of automatically classifying texts according to the emotions they express.</p>
+<p>In the most simple scenario, we want to classify a text as positive, negative, or neutral. In more complex situations, we could identify specific emotions or compute the sentiment with respect to a specific entity.</p>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+<div id="load-packages" class="section level1">
+<h1>Load Packages</h1>
+<div style="margin-bottom:50px;">
+
+</div>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --</code></pre>
+<pre><code>## v ggplot2 3.3.5     v purrr   0.3.4
+## v tibble  3.1.4     v dplyr   1.0.7
+## v tidyr   1.1.3     v stringr 1.4.0
+## v readr   2.0.1     v forcats 0.5.1</code></pre>
+<pre><code>## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(tidytext)</code></pre>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+<div id="read-and-clean-data" class="section level1">
+<h1>Read and Clean Data</h1>
+<div style="margin-bottom:50px;">
+
+</div>
+<pre class="r"><code># Read csv file and store it in a new variable called data
+data &lt;- read.csv(&quot;speeches_uk.csv&quot;)</code></pre>
+<pre class="r"><code># Do some quick cleaning tasks
+
+clean_data &lt;- data %&gt;%
+  select(-X) %&gt;% #remove X column
+  mutate(date = as.Date(date,&quot;%d-%m-%Y&quot;)) %&gt;% #convert date variable to date type
+  mutate(country = as.factor(country)) %&gt;% #convert country to factor
+  mutate(speaker = as.factor(speaker)) %&gt;% #convert speaker to factor
+  mutate(text = str_replace_all(text,&quot;&lt;.*?&gt;&quot;,&quot;&quot;))%&gt;% #remove all html tags
+  mutate(text = str_replace_all(text,&quot;[^a-zA-Z0-9 -]&quot;,&quot;&quot;))%&gt;% #remove all non-alphanumeric characters
+  mutate(text = str_trim(text)) %&gt;% #trim excess white spaces
+  mutate(text = tolower(text))  #covert all to lower case</code></pre>
+<pre class="r"><code># Tokenize Clean data and remove stopwords
+data(&quot;stop_words&quot;)
+
+clean_tokenized_data &lt;- clean_data %&gt;%
+  unnest_tokens(word,text)%&gt;%
+  anti_join(stop_words)</code></pre>
+<pre><code>## Joining, by = &quot;word&quot;</code></pre>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+<div id="sentiment-lexicons" class="section level1">
+<h1>Sentiment Lexicons</h1>
+<div style="margin-bottom:50px;">
+
+</div>
+<p>A sentiment lexicon (i.e. dictionary) contains information about the emotions or polarity expressed by words, phrases, or concepts.</p>
+<p>In practice, a dictionary usually provides one or more scores for each word. We can then use them to compute the overall sentiment of an input sentence based on individual words.</p>
+<p>The <code>tidytext</code> package includes four distinct sentiment dictionaries that can be accessed with the <code>get_sentiments()</code> function. The only argument is the name of the dictionary.</p>
+<ol style="list-style-type: decimal">
+<li>Bing lexicon<br />
+</li>
+<li>AFINN lexicon<br />
+</li>
+<li>Loughran lexicon<br />
+</li>
+<li>NRC lexicon</li>
+</ol>
+<div style="margin-bottom:70px;">
+
+</div>
+<div id="bing-lexicon" class="section level2">
+<h2>1. Bing lexicon</h2>
+<pre class="r"><code># Pull and inspect the bing lexicon
+get_sentiments(&quot;bing&quot;) %&gt;%
+count(sentiment)</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   sentiment     n
+##   &lt;chr&gt;     &lt;int&gt;
+## 1 negative   4781
+## 2 positive   2005</code></pre>
+<pre class="r"><code># What are some of the positive and negative words?
+sample_words_bing &lt;- get_sentiments(&quot;bing&quot;) %&gt;%
+group_by(sentiment) %&gt;%
+slice_sample(n=10)</code></pre>
+<div style="margin-bottom:70px;">
+
+</div>
+</div>
+<div id="afinn-lexicon" class="section level2">
+<h2>2. AFINN lexicon</h2>
+<pre class="r"><code>get_sentiments(&quot;afinn&quot;) %&gt;%
+summarize(
+  minscore = min (value),
+  maxscore = max(value)
+)</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   minscore maxscore
+##      &lt;dbl&gt;    &lt;dbl&gt;
+## 1       -5        5</code></pre>
+<pre class="r"><code># What are some of the positive and negative words?
+sample_words_afinn &lt;- get_sentiments(&quot;afinn&quot;) %&gt;%
+group_by(value) %&gt;%
+slice_sample(n=5)</code></pre>
+<div style="margin-bottom:70px;">
+
+</div>
+</div>
+<div id="loughran-lexicon" class="section level2">
+<h2>3. Loughran lexicon</h2>
+<pre class="r"><code>get_sentiments(&quot;loughran&quot;) %&gt;%
+  count(sentiment)</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   sentiment        n
+##   &lt;chr&gt;        &lt;int&gt;
+## 1 constraining   184
+## 2 litigious      904
+## 3 negative      2355
+## 4 positive       354
+## 5 superfluous     56
+## 6 uncertainty    297</code></pre>
+<pre class="r"><code>sample_words_loughran &lt;- get_sentiments(&quot;loughran&quot;) %&gt;%
+group_by(sentiment) %&gt;%
+slice_sample(n=3)</code></pre>
+<pre class="r"><code>sentiment_counts &lt;-  get_sentiments(&quot;loughran&quot;) %&gt;%
+  count(sentiment) %&gt;%
+  mutate(sentiment2 = fct_reorder(sentiment,n))
+
+
+ggplot(sentiment_counts, aes(x = sentiment2, y = n)) +
+geom_col() +
+coord_flip() +
+labs(
+title = &quot;Sentiment Counts in Loughran&quot;,
+x = &quot;Counts&quot;,
+y = &quot;Sentiment&quot;)</code></pre>
+<img src="SA_files/figure-html/unnamed-chunk-11-1.png" width="672" />
+<div style="margin-bottom:70px;">
+
+</div>
+</div>
+<div id="nrc-lexicon" class="section level2">
+<h2>4. NRC lexicon</h2>
+<pre class="r"><code>get_sentiments(&quot;nrc&quot;) %&gt;% 
+  count(sentiment) %&gt;% 
+  arrange(desc(n))</code></pre>
+<pre><code>## # A tibble: 10 x 2
+##    sentiment        n
+##    &lt;chr&gt;        &lt;int&gt;
+##  1 negative      3318
+##  2 positive      2308
+##  3 fear          1474
+##  4 anger         1246
+##  5 trust         1230
+##  6 sadness       1187
+##  7 disgust       1056
+##  8 anticipation   837
+##  9 joy            687
+## 10 surprise       532</code></pre>
+<pre class="r"><code>sample_words_NRC &lt;- get_sentiments(&quot;nrc&quot;) %&gt;%
+group_by(sentiment) %&gt;%
+slice_sample(n=3)</code></pre>
+<pre class="r"><code># Pull in the nrc dictionary, count the sentiments and reorder them by count
+sentiment_counts_nrc&lt;- get_sentiments(&quot;nrc&quot;) %&gt;% 
+  count(sentiment) %&gt;% 
+  mutate(sentiment2 = fct_reorder(sentiment, n))
+
+# Visualize sentiment_counts using the new sentiment factor column
+ggplot(sentiment_counts_nrc, aes(x=sentiment2, y=n)) +
+  geom_col() +
+  coord_flip() +
+  # Change the title to &quot;Sentiment Counts in NRC&quot;, x-axis to &quot;Sentiment&quot;, and y-axis to &quot;Counts&quot;
+  labs(
+    title = &quot;Sentiment Counts in NRC&quot;,
+    x = &quot;Sentiment&quot;,
+    y = &quot;Counts&quot;
+  )</code></pre>
+<p><img src="SA_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<div style="margin-bottom:80px;">
+
+</div>
+</div>
+</div>
+<div id="appending-lexicons" class="section level1">
+<h1>Appending Lexicons</h1>
+<div style="margin-bottom:30px;">
+
+</div>
+<div id="appending-bing-lexicon" class="section level2">
+<h2>Appending bing lexicon</h2>
+<pre class="r"><code>bing_sentiment &lt;- clean_tokenized_data %&gt;%
+  inner_join(get_sentiments(&quot;bing&quot;)) %&gt;%
+  count(sentiment) %&gt;%
+  arrange(desc(n))</code></pre>
+<pre><code>## Joining, by = &quot;word&quot;</code></pre>
+<pre class="r"><code>bing_top10 &lt;- clean_tokenized_data %&gt;%
+  inner_join(get_sentiments(&quot;bing&quot;)) %&gt;%
+  count(word, sentiment) %&gt;%
+  group_by(sentiment) %&gt;%
+  top_n(10,n) %&gt;%
+  ungroup() %&gt;%
+  mutate(word2 = fct_reorder(word, n))</code></pre>
+<pre><code>## Joining, by = &quot;word&quot;</code></pre>
+<pre class="r"><code>ggplot(bing_top10, aes(x = word2, y = n, fill = sentiment)) +
+geom_col(show.legend = FALSE) +
+facet_wrap(~ sentiment, scales = &quot;free&quot;) +
+coord_flip() +
+labs(title = &quot;Bing Sentiment Word Counts&quot;,
+x = &quot;Words&quot;
+)</code></pre>
+<img src="SA_files/figure-html/unnamed-chunk-17-1.png" width="672" />
+<div style="margin-bottom:70px;">
+
+</div>
+<p>Plot most used word by each speaker and corresponding sentiment.</p>
+<pre class="r"><code>bing_top10_speaker &lt;- clean_tokenized_data %&gt;%
+  inner_join(get_sentiments(&quot;bing&quot;)) %&gt;%
+  count(word, sentiment, speaker) %&gt;%
+  group_by(sentiment,speaker) %&gt;%
+  top_n(10,n) %&gt;%
+  ungroup() %&gt;%
+  mutate(word2 = fct_reorder(word, n))</code></pre>
+<pre><code>## Joining, by = &quot;word&quot;</code></pre>
+<pre class="r"><code>ggplot(bing_top10_speaker, aes(x = word2, y = n, fill = sentiment)) +
+geom_col() +
+facet_wrap(vars(speaker), scales=&quot;free&quot;) +
+coord_flip() +
+labs(title = &quot;Bing Sentiment Word Counts&quot;,
+x = &quot;Words&quot;
+)+ 
+theme_bw()  </code></pre>
+<p><img src="SA_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<div style="margin-bottom:70px;">
+
+</div>
+<p>We can also plot overall sentiment (positive - negative) for each speaker.</p>
+<pre class="r"><code>sentiment_speaker &lt;- clean_tokenized_data %&gt;%
+  inner_join(get_sentiments(&quot;bing&quot;)) %&gt;%
+  count(speaker,sentiment) %&gt;%
+  spread(sentiment,n) %&gt;%
+  mutate(overallsentiment = positive - negative)</code></pre>
+<pre><code>## Joining, by = &quot;word&quot;</code></pre>
+<pre class="r"><code>ggplot(sentiment_speaker, aes(x = speaker, y = overallsentiment, fill = as.factor(speaker))) +
+geom_col(show.legend = FALSE) +
+coord_flip() +
+labs(title = &quot;Overall Sentiment by Speakers&quot;,
+subtitle = &quot;UK Speeches&quot;,
+x = &quot;Speakers&quot;,
+y = &quot;Overall Sentiment&quot;)</code></pre>
+<p><img src="SA_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
